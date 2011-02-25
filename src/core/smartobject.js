@@ -19,8 +19,7 @@
 
 SIF.Smartobject = function (obj) {
 
-	if (obj == undefined) {
-		// special type of object (e.g., user, document, ...)
+	if (obj == undefined || obj.attr == undefined) {
 		this.id = SIF.Utils.guid();
 	} 
 	else {

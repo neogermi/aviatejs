@@ -10,7 +10,7 @@
 	xmlns:dc="http://purl.org/dc/terms/"
 	lang="en"> 
   <head>
-    <title>[SiF] - Query smart! Demo</title>
+    <title>[SiF] - Smart list editing - Demo</title>
 	
 	<!-- jQuery -->
 	<script type="text/javascript" src="../../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
@@ -25,9 +25,7 @@
     <script type="text/javascript" src="../../lib/jquery/jquery.cookie.js"></script>
 	
 	<!-- rdfQuery -->
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.core.min.js"></script>
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rdfa.min.js"></script>
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rules.min.js"></script>
+	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.all.min.js"></script>
 	
     <!-- AutoSuggest -->
 	<script type="text/javascript" src="../../lib/autosuggest/jquery.autoSuggest.js"></script>
@@ -42,7 +40,7 @@
     <link rel="stylesheet" href="../../lib/jquery-ui/css/jquery.ui.all.css" />
 
     <!-- SIF - Semantic Interaction Framework -->
-   <!--<script type="text/javascript" src="../../src/core/core.js"></script>
+   <script type="text/javascript" src="../../src/core/core.js"></script>
     <script type="text/javascript" src="../../src/core/logs.js"></script>
     <script type="text/javascript" src="../../src/core/events.js"></script>
     <script type="text/javascript" src="../../src/core/jquery.sif.js"></script>
@@ -54,7 +52,7 @@
     <script type="text/javascript" src="../../src/core/contextmanager.js"></script>
     <script type="text/javascript" src="../../src/core/dsf.js"></script>
     <script type="text/javascript" src="../../src/core/dsfmanager.js"></script>
-    --><script type="text/javascript" src="../../dist/min/jquery.sif-0.1.min.js"></script>
+   <!--<script type="text/javascript" src="../../dist/min/jquery.sif-0.1.min.js"></script> -->
 	
 	<!-- SIF - connectors -->
     <script type="text/javascript" src="../../src/connectors/stanbol.js"></script>
@@ -77,6 +75,7 @@
   <!-- Let's use it! -->
    <script type="text/javascript">
       $(function() {
+		 SIF.User.sif('analyze');
 		$('#summary').keydown(function( event ) {
 			if ( event.simulated ) {
 				event.stopImmediatePropagation();
@@ -127,11 +126,12 @@
 	</div>
       </center>
       <div>
-		<div smart="true" id="summary">
+		<div id="summary">
 		  <h3>Teaser</h3>
 		  <p>The IKS Semantic interaction framework hackathon took place in Vienna, Austria. 
 		  Persons from different locations and companies came to work on the framework, e.g.,
 		  GENTICS, DFKI, jQuery UI.</p>
+		  <h3>Participants</h3>
 	      <ul>
 	        <li></li>
 	      </ul>

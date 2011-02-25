@@ -45,6 +45,9 @@ SIF.Connectors.browser.analyze = function (obj, success, error) {
 		  .prefix('dbprop', 'http://dbpedia.org/property/')
 		  .add('<currentLoc> dbprop:latitude "' + lat + '" .')
 		  .add('<currentLoc> dbprop:longitude "' + long + '" .')
+		  .add('<currentLoc> dbprop:accuracy "' + acc + '" .')
+		  .add('<currentAgent> dbprop:agent "' + navigator.userAgent + '" .')
+		  .add('<currentAgent> dbprop:lang "' + navigator.language + '" .')
 		  .add('<currentLoc> dbprop:accuracy "' + acc + '" .');
 		success(rdf);
 	}

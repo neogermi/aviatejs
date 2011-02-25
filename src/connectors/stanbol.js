@@ -16,6 +16,8 @@
  *  limitations under the License.
  */
 
+if ( !SIF.Connectors ) SIF.Connectors = {};
+
 /**
  * register the connector with a unique name
  */
@@ -32,7 +34,22 @@ SIF.Connectors.stanbol.init = function () {
 }
 
 SIF.Connectors.stanbol.analyze = function (obj, success, error) {
+	if (obj == undefined) {
+		error ("Undefined object!");
+		return;
+	}
 	var that = this;
+	
+	var text = "";
+	if (obj.get(0).tagName && obj.get(0).tagName == 'TEXTAREA') {
+		text = obj.val();
+	} else if (obj.html) {
+		text = obj.html();
+	} else {
+		error ("Not supported object: '" + obj + "'");
+		return;
+	}
+	
 	if (this.options.proxy_url) {
 		$.ajax({
 			type: "POST",
@@ -45,7 +62,7 @@ SIF.Connectors.stanbol.analyze = function (obj, success, error) {
 			url: this.options.proxy_url, 
 			data: {
     			proxy_url: this.options.stanbol_url, 
-    			content: obj.html(),
+    			content: text,
     			format: this.options.dataType
 			}
 		});
@@ -59,7 +76,7 @@ SIF.Connectors.stanbol.analyze = function (obj, success, error) {
 				error("Could not retrieve data from stanbol!");
 			},
 			url: this.options.stanbol_url, 
-			data: obj.html(),
+			data: text,
 			dataType: this.options.dataType
 		});
 	}

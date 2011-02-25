@@ -54,7 +54,7 @@ SIF.Smartobject.prototype.analyze = function (filter) {
 	};
 	
 	var error = function (message) {
-		SIF.log("warn", "SIF.Smartobject.analyze", message);
+		SIF.log("debug", "SIF.Smartobject.analyze", message);
 	}
 	
 	$.each (SIF.ConnectorManager.connectors, function () {

@@ -86,9 +86,42 @@ SIF.prototype.init = function () {
 	SIF.log("debug", "core.js", "initializing the dsf manager");
 	this.DsfManager.init();
 
+	//initialize the user
+	SIF.log("debug", "core.js", "initializing the user");
+	SIF.initUser();
+
+	//initialize the document
+	SIF.log("debug", "core.js", "initializing the document");
+	SIF.initDocument();
+
 	SIF.log("info", "core.js", "finished initializing the SIF core!");
 	SIF.EventRegistry.trigger(new SIF.Event("ready", SIF, null));
 }
+
+/**
+ * Initialize the special SIF.Smartobject of the user.
+ */
+SIF.prototype.initUser = function () {
+	SIF.User = new SIF.Smartobject(navigator);
+
+	//get current location
+	if (SIF.Connectors.browser) {
+		SIF.Connectors.browser.analyze(navigator, function (data) {
+			var triples = data.databank.triples();
+			SIF.User.getContext().update(data, SIF.Connectors.browser)
+		});
+	}
+	SIF.EventRegistry.trigger(new SIF.Event("ready", SIF.User, null));
+};
+
+/**
+ * Initialize the special SIF.Smartobject of the document.
+ */
+SIF.prototype.initDocument = function () {
+	SIF.Document = new SIF.Smartobject(document);
+
+	SIF.EventRegistry.trigger(new SIF.Event("ready", SIF.Document, null));
+};
 
 /**
  * Retrieves the {@link SIF.Smartobject} that corresponds to the given jQuery object.
