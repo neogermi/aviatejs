@@ -77,10 +77,112 @@
 	SIF.Connectors.stanbol.options.stanbol_url = "http://stanbol.iksfordrupal.net:9000/engines/";
    </script>
   
+  <!-- SiFObserver -->
+   <script type="text/javascript">
+		
+		var SiFObserver = function ( selector, overwrite_delimiters ) {
+			
+			this.delimiters = [];
+			this.autoCompleteElements = [];
+			
+			var that = this;
+			var delims = overwrite_delimiters || [ ':', ';', '.', '@', '*', '#', 'Enter', "\t" ];
+			
+			// Store delimiter tokens with their charCode values for quicker testing later on
+			$.each(
+				delims,
+				function ( i, e ) {
+					that.delimiters.push(
+						( e == 'Enter' ) ? 13 : e.charCodeAt( 0 )
+					);
+				}
+			);
+			
+			var elem = $( selector ).keypress(function ( event ) {
+				
+				if ( jQuery.inArray( event.keyCode || event.charCode, that.delimiters ) >= 0 ) {
+					var range = GENTICS.Aloha.Selection.rangeObject,
+						elem = $( range.commonAncestorContainer ),
+						tag_name = elem.attr( 'tagName' ),
+						far_parent = $( range.limitObject ),
+						near_parent = range.markupEffectiveAtStart[
+							range.markupEffectiveAtStart.length - 1
+						];
+					
+					console.log(
+						"SiFObserver:" +
+						"\n\t elem:", elem,
+						"\n\t ear parent:", near_parent,
+						"\n\t far parent:", far_parent
+					);
+					
+					switch ( tag_name ) {
+						case 'UL':
+						case 'OL':
+							console.log( 'SiFObserver: Creating smart object from ', far_parent );
+							that.createSmartObject( far_parent );
+							that.context_element = far_parent;
+							break;
+						case 'LI':
+							if ( elem.parent().find( 'li' ).length > 0 ) {
+								// Attach autocomplete on newly created li element
+								console.log( 'SiFObserver: Attaching autocomplete on ', elem );
+								that.attachAutocomplete( elem );
+							} else {
+								// do something smart with this object
+							}
+							break;
+						default:
+							console.info( 'SiFObserver: Do nothing' );
+							break;
+					}
+				}
+				
+			});
+			
+			console.info( 'SiFObserver: observing ', elem );
+			
+		};
+		
+		SiFObserver.prototype.attachAutocomplete = function ( elem ) {
+			
+			var that = this;
+			// Only attach autocomplete to this element if there isn't one on it already
+			if ( elem.attr( 'data-has_sif_autocomplete' ) != 'true' ) {
+				elem.autocomplete({
+					source: function ( request, response ) {
+						var persons = that.context_element.sif( 'companies' ).sif( 'employees' ),
+							names = [];
+						// loop through connectors
+						$.each( persons.matches, function() {
+							// loop through people
+							$.each( this, function() {
+								names.push( this.name.toString().replace( /^"([^"]+)".+/, "$1" ) );
+							});
+						});
+						response( $.ui.autocomplete.filter( names, request.term ) );
+					}
+				});
+				elem.attr( 'data-has_sif_autocomplete', 'true' );
+			}
+			
+		};
+		
+		SiFObserver.prototype.createSmartObject = function ( elem ) {
+			console.log( 'SiFObserver: Doing semantic lifting on ', elem );
+			elem.sif();
+		};
+		
+   </script>
+   
   <!-- Let's use it! -->
    <script type="text/javascript">
       $(function() {
-		 SIF.User.sif('analyze');
+		
+		var sif_ob = new SiFObserver( '#summary' );
+		
+		SIF.User.sif('analyze');
+		/* Commenting this out for now becuase it is causing issues with recursion too many recursions...
 		$('#summary').keydown(function( event ) {
 			if ( event.simulated ) {
 				event.stopImmediatePropagation();
@@ -96,6 +198,7 @@
 			event.simulated = true;
 			$( elem ).trigger( event );
 		});
+		*/
 		$('#summary').aloha();
 		$('#summary').find('li').autocomplete({
 			source: function(request, response) {
