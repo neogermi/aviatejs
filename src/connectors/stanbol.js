@@ -54,7 +54,7 @@ SIF.Connectors.stanbol.analyze = function (obj, success, error) {
 		$.ajax({
 			type: "POST",
 			success: function (data, textStatus, jqXHR) {
-				success(parseStanbolOutput(data), that);
+				setTimeout(function(){success(parseStanbolOutput(data), that)},100);
 			},
 			error: function (data, textStatus, jqXHR) {
 				error("Could not retrieve data from stanbol!");
@@ -70,7 +70,7 @@ SIF.Connectors.stanbol.analyze = function (obj, success, error) {
 		$.ajax({
 			type: "POST",
 			success: function (data, textStatus, jqXHR) {
-				success(parseStanbolOutput(data));
+				setTimeout(success(parseStanbolOutput(data)),1000);
 			},
 			error: function (data, textStatus, jqXHR) {
 				error("Could not retrieve data from stanbol!");
@@ -109,7 +109,11 @@ parseStanbolOutput = function (data) {
 								var objectDatatype = data[subj][pred][i].datatype;
 								var subjectRDF = jQuery.rdf.resource('<' + subject + '>');
 								var predicateRDF = jQuery.rdf.resource('<' + predicate + '>');
-								var objectRDF = jQuery.rdf.literal('"' + objectValue + '"');
+								try {
+									var objectRDF = jQuery.rdf.literal('"' + objectValue.replace(/"/g, "\\\"") + '"');
+								} catch(e) {
+									console.error("error creating literal object for " + objectValue);
+								}
 								var triple = jQuery.rdf.triple(subjectRDF, predicateRDF, objectRDF);
 							
 								rdf.add(triple);
