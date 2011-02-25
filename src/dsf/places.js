@@ -91,7 +91,7 @@ SIF.Dsfs.places.connectorMappers['sif.connector.Stanbol'] = function (rdf) {
 	.where('?subject <http://fise.iks-project.eu/ontology/confidence> ?confidence')
 	.each (function () {
 		var place =  {
-				uri : this.subject,
+				uri : this.object,
 				name : this.name.toString(),
 				confidence : this.confidence.toString()
 		};
