@@ -38,7 +38,8 @@ if (!$h = new http()) {
 
 $h->url = $proxy_url;
 $h->postvars = $_POST;
-if (!$h->fetch($h->url)) {
+$h->verb = $_REQUEST['verb'];
+if (!$h->fetch($h->url,$h->verb)) {
     header("HTTP/1.0 501 Script Error");
     echo "proxy.php had an error attempting to query the url";
     exit();

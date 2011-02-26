@@ -24,9 +24,9 @@ if ( !SIF.Connectors ) SIF.Connectors = {};
 SIF.Connectors.stanbol = new SIF.Connector('sif.connector.Stanbol');
 
 SIF.Connectors.stanbol.options = {
-		"stanbol_url" : "http://stanbol.demo.nuxeo.com/engines/",
-		"dataType" : "application/rdf+json",
-		"proxy_url" : "../../utils/proxy/proxy.php"
+		"stanbol_enhancer_url" : "http://stanbol.demo.nuxeo.com/engines/",
+		"stanbol_entityhub_url" : "http://stanbol.demo.nuxeo.com/entityhub/",
+		"dataType" : "application/rdf+json"
 };
 
 SIF.Connectors.stanbol.init = function () {
@@ -35,98 +35,98 @@ SIF.Connectors.stanbol.init = function () {
 
 SIF.Connectors.stanbol.analyze = function (obj, success, error) {
 	if (obj == undefined) {
-		error ("Undefined object!");
+		SIF.log ("warn", "SIF.Connectors.stanbol#analyze", "Undefined object!");
 		return;
 	}
-	var that = this;
 	
-	var text = "";
-	if (obj.get(0).tagName && obj.get(0).tagName == 'TEXTAREA') {
-		text = obj.val();
-	} else if (obj.html) {
-		text = obj.html();
+	var text = extractText(obj);
+	if (text.length == 0) {
+		SIF.log ("warn", "SIF.Connectors.stanbol#analyze", "Could not extract text from object!");
+		return
+	}
+	
+	var enhancerOutput = queryEnhancer(text);
+	if (enhancerOutput.status == 200) {
+		var responseObj = jQuery.parseJSON(enhancerOutput.responseText);
+		var rdf = parseEnhancerOutput(responseObj);
+		var rdf2 = fillWithEntityHubInfo(rdf);
+		success(rdf, this);
 	} else {
-		error ("Not supported object: '" + obj + "'");
-		return;
+		error("Could not extract information from enhancer!");
 	}
-	
-	if (this.options.proxy_url) {
-		$.ajax({
+}
+
+queryEnhancer = function (text) {
+	if (SIF.options.proxy_url) {
+		return jQuery.ajax({
+			async: false,
 			type: "POST",
-			success: function (data, textStatus, jqXHR) {
-				setTimeout(function(){success(parseStanbolOutput(data), that)},100);
-			},
-			error: function (data, textStatus, jqXHR) {
-				error("Could not retrieve data from stanbol!");
-			},
-			url: this.options.proxy_url, 
+			url: SIF.options.proxy_url,
 			data: {
-    			proxy_url: this.options.stanbol_url, 
+    			proxy_url: SIF.Connectors.stanbol.options.stanbol_enhancer_url, 
     			content: text,
-    			format: this.options.dataType
+    			verb: "POST",
+    			format: SIF.Connectors.stanbol.options.dataType
 			}
 		});
 	} else {
-		$.ajax({
+		return jQuery.ajax({
+			async: false,
 			type: "POST",
-			success: function (data, textStatus, jqXHR) {
-				setTimeout(success(parseStanbolOutput(data)),1000);
-			},
-			error: function (data, textStatus, jqXHR) {
-				error("Could not retrieve data from stanbol!");
-			},
-			url: this.options.stanbol_url, 
+			url: SIF.Connectors.stanbol.options.stanbol_enhancer_url, 
 			data: text,
-			dataType: this.options.dataType
+			dataType: SIF.Connectors.stanbol.options.dataType
 		});
 	}
 }
-	
-parseStanbolOutput = function (data) {
-		var rdf = jQuery.rdf();
-		
-		for (var subj in data) {
-			var subject = subj.replace("\\/", "/");
-			for (var pred in data[subj]) {
-				var predicate = pred.replace("\\/", "/");
-				if ($.isArray(data[subj][pred])) {
-					for (var i = 0; i < data[subject][pred].length; i++) {
-						var obj = data[subj][pred][i];
-						
-						var objectValue = data[subj][pred][i].value;
-						var objectType = data[subj][pred][i].type;
-						
-						if (objectValue && objectType) {
-							objectValue = objectValue.replace("\\/", "/");
-							if (objectType === "uri") {
-								var subjectRDF   = jQuery.rdf.resource('<' + subject +'>');
-								var predicateRDF = jQuery.rdf.resource('<' + predicate +'>');
-								var objectRDF    = jQuery.rdf.resource('<' + objectValue +'>');
-								var triple = jQuery.rdf.triple(subjectRDF, predicateRDF, objectRDF);
-								
-								rdf.add(triple);
-							} else if (objectType === "literal") {
-								var objectDatatype = data[subj][pred][i].datatype;
-								var subjectRDF = jQuery.rdf.resource('<' + subject + '>');
-								var predicateRDF = jQuery.rdf.resource('<' + predicate + '>');
-								try {
-									var objectRDF = jQuery.rdf.literal('"' + objectValue.replace(/"/g, "\\\"") + '"');
-								} catch(e) {
-									console.error("error creating literal object for " + objectValue);
-								}
-								var triple = jQuery.rdf.triple(subjectRDF, predicateRDF, objectRDF);
-							
-								rdf.add(triple);
-							}
-							else {
-								alert("Parsing ERROR: Expected type 'uri' OR 'literal', found: " + objectType + "!");
-							}
-						}
-					}
-				} else {
-				//	alert("Parsing ERROR: Expected 'array', found: " + (typeof data[subj][pred]) + "!");
-				}
+
+queryEntityHub = function (uri) {
+	if (SIF.options.proxy_url) {
+		return jQuery.ajax({
+			async: false,
+			type: "POST",
+			url: SIF.options.proxy_url,
+			data: {
+    			proxy_url: SIF.Connectors.stanbol.options.stanbol_entityhub_url + "sites/entity?id=" + uri, 
+    			content: "",
+    			verb: "GET",
+    			format: "application/rdf+json"
 			}
-		}
-		return rdf;
+		});
+	} else {
+		return jQuery.ajax({
+			async: false,
+			type: "GET",
+			url: SIF.Connectors.stanbol.options.stanbol_entityhub_url + "sites/entity?id=" + uri,
+			data: text,
+			dataType: SIF.Connectors.stanbol.options.dataType
+		});
 	}
+}
+
+extractText = function (obj) {
+	if (obj.get(0).tagName && obj.get(0).tagName == 'TEXTAREA') {
+		return obj.val();
+	} else if (obj.html) {
+		return obj.html();
+	} else {
+		return "";
+	}
+}
+
+parseEnhancerOutput = function (data) {
+	return jQuery.rdf().load(data, {});
+}
+
+fillWithEntityHubInfo = function (rdf) {
+	jQuery.each(rdf.databank.objectIndex, function (uri) {
+		var uriStr = uri.toString().replace(/"/g, '').replace(/</, '').replace(/>/, '');
+		var result = queryEntityHub(uriStr);
+		if (result.status == 200) {
+			var resultText = result.responseText;
+			var resultObj = jQuery.parseJSON(resultText);
+			rdf.load(resultObj);
+		};
+	});
+	return rdf;
+}

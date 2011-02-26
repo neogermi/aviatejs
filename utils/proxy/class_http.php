@@ -68,8 +68,8 @@ class http {
     fetch() method to get the content. fetch() will use 'ttl' property to
     determine whether to get the content from the url or the cache.
     */
-    function fetch($url="", $ttl=0, $name="", $user="", $pwd="", $verb="GET") {
-        $this->log .= "--------------------------------<br />fetch() called<br />\n";
+    function fetch($url="", $verb, $name="", $user="", $pwd="", $ttl=0) {
+      $this->log .= "--------------------------------<br />fetch() called<br />\n";
         $this->log .= "url: ".$url."<br />\n";
         $this->status = "";
         $this->header = "";
@@ -178,13 +178,18 @@ class http {
             $this->log .= "Authentication will be attempted<br />\n";
             $this->headers["Authorization"] = "Basic ".base64_encode($user.":".$pwd);
         }
-        
-        if (count($this->postvars) > 0) {
+	
+        if ($verb == "POST") {
             $this->log .= "Variables will be POSTed<br />\n";
             $request = "POST ".$path." HTTP/1.0\r\n";
+	    if ($this->postvars["format"]) {
+	      $this->headers["Accept"] = $this->postvars["format"];
+	    }
             $post_string = "";
             foreach ($this->postvars as $key=>$value) {
+	      if ($key != "format") {
                 $post_string .= "&".urlencode($key)."=".urlencode($value);
+	      }
             }
             $post_string = substr($post_string,1);
             $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -194,12 +199,13 @@ class http {
             $request = $verb." ".$path." HTTP/1.0\r\n";
             $this->headers["Content-Length"] = strlen($this->xmlrequest);
         } else {
-            $request = $verb." ".$path." HTTP/1.0\r\n";
+	    $request = $verb." ".$path." HTTP/1.0\r\n";
+	    if ($this->postvars["format"]) {
+	      $this->headers["Accept"] = $this->postvars["format"];
+	    }
         }
 
         #echo "<br />request: ".$request;
-
-        
         if (fwrite($sock, $request) === FALSE) {
             fclose($sock);
             $this->log .= "Error writing request type to socket<br />\n";

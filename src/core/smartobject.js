@@ -28,6 +28,7 @@ SIF.Smartobject = function (obj) {
 		}
 		this.id = obj.attr('id');
 		this.object = obj;
+		this.matches = undefined;
 	}
 	this.context = new SIF.Context("object." + this.id, this);
 	
@@ -45,8 +46,6 @@ SIF.Smartobject.prototype.sif = function(method) {
 	}
 	return smartObject;
 };
-
-SIF.Smartobject.prototype.matches = undefined;
 
 SIF.Smartobject.prototype.copy = function () {
 	var copy = new SIF.Smartobject();

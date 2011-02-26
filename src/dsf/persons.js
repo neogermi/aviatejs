@@ -63,7 +63,7 @@ SIF.Smartobject.prototype.persons = function () {
 		if (mapper) {
 			var rdf = copy.getContext().rdf[connectorId];
 			if (rdf) {
-				copy.matches = copy.matches.concat(mapper(rdf, this.matches));
+				copy.matches = SIF.Utils.concatDistinct(copy.matches, mapper(rdf, this.matches));
 			}
 		}
 	}

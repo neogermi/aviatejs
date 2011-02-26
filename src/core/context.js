@@ -36,14 +36,12 @@ SIF.Context = function(contextId, parentObject) {
 
 	this.options = {};
 	
+	this.rdf = {};
+	
+	this.rdf["noconnector"] = jQuery.rdf();
+	
 	SIF.ContextManager.register(this);
 
-};
-
-SIF.Context.prototype.rdf = {};
-
-SIF.Context.prototype.init = function() {
-	this.rdf["noconnector"] = jQuery.rdf();
 };
 
 /**
@@ -52,7 +50,7 @@ SIF.Context.prototype.init = function() {
  * @trigger Triggers the 'contextChanged' event on the parentObject.
  */
 SIF.Context.prototype.update = function (rdf, connector) {
-	
+
 	if (connector === undefined) {
 		SIF.log("error", "SIF.Context.update(rdf, undefined)", "TO BE IMPLEMENTED");
 	}
@@ -64,7 +62,6 @@ SIF.Context.prototype.update = function (rdf, connector) {
 			that.rdf[connector.id].add(e);
 		});
 	}
-	
 	SIF.EventRegistry.trigger(new SIF.Event("contextChanged", this.parentObject, null));
 }
 

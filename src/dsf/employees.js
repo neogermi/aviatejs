@@ -62,9 +62,7 @@ SIF.Smartobject.prototype.employees = function () {
 		if (mapper) {
 			var rdf = copy.getContext().rdf[connectorId];
 			if (rdf) {
-				copy.matches[connectorId] = mapper(rdf, this.matches);
-			} else {
-				copy.matches[connectorId] = [];
+				copy.matches = SIF.Utils.concatDistinct(copy.matches, mapper(rdf, this.matches));
 			}
 		}
 	}
@@ -85,7 +83,7 @@ SIF.Dsfs.employees.connectorMappers['sif.connector.Rdfa'] = function (rdf, match
 	.filter(function () {
 		var affiliation = this.affiliation;
 		var contains = false;
-		$.each (matches, function () {
+		jQuery.each (matches, function () {
 			if (this.uri.toString() === affiliation.toString()) {
 				contains = true;
 				return;

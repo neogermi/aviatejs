@@ -32,7 +32,7 @@ SIF.Connectors.rdfa.init = function () {
 SIF.Connectors.rdfa.analyze = function (obj, success, error) {
 	if (jQuery.type(obj) === 'object') {
 		for (var i = 0; i < obj.length; i++) {
-			var rdfa = $(obj[i]).rdfa();
+			var rdfa = jQuery(obj[i]).rdfa();
 			success(rdfa, this);
 		}
 	}

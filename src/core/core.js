@@ -43,13 +43,6 @@ var SIF = function () {};
 SIF.prototype.options = {};
 
 /**
- * Contains all registered objects of type {@link SIF.Smartobjects} in {@link SIF}.
- * @property
- * @type Array
- */
-SIF.prototype.smartobjects = [];
-
-/**
  * Logs a message to the console
  * @param level Level of the log ("error", "warn" or "info", "debug")
  * @param component Component that calls the log
@@ -129,22 +122,20 @@ SIF.prototype.initDocument = function () {
  * @return {SIF.Smartobject}
  */
 SIF.prototype.getSmartObject = function (obj) {
-	obj = jQuery(obj);
-	//iterate over this.smartobjects
-	for (var i = 0; i < this.smartobjects; i++) {
-		var sObj = this.smartobjects[i];
-		if (sObj instanceof SIF.Smartobject && sObj.object.get(0) === obj.get(0)) {
-			return sObj;
-		}
+	var jObj = jQuery(obj);
+	
+	var sObj = jObj.data("SIF.smartobject");
+	
+	if (sObj == undefined) {
+		//register a new element!
+		var sObj = new SIF.Smartobject(jObj);
+		
+		jObj.data("SIF.smartobject", sObj);
+		SIF.EventRegistry.trigger(new SIF.Event("registered", jObj, null));
+		SIF.EventRegistry.trigger(new SIF.Event("registered", sObj, null));
+		SIF.EventRegistry.trigger(new SIF.Event("objectRegistered", SIF, sObj));
+		return sObj;
 	}
-	//register a new element!
-	var sObj = new SIF.Smartobject(obj);
-	
-	this.smartobjects.push(sObj);
-	SIF.EventRegistry.trigger(new SIF.Event("registered", obj, null));
-	SIF.EventRegistry.trigger(new SIF.Event("registered", sObj, null));
-	SIF.EventRegistry.trigger(new SIF.Event("objectRegistered", SIF, sObj));
-	
 	return sObj;
 }
 

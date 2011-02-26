@@ -49,6 +49,7 @@ SIF.Dsfs.analyze.init = function () {};
  */
 SIF.Smartobject.prototype.analyze = function (filter) {
 	var that = this;
+	
 	var success = function (newRdf, connector) {
 		that.getContext().update(newRdf, connector);
 	};
@@ -57,9 +58,9 @@ SIF.Smartobject.prototype.analyze = function (filter) {
 		SIF.log("debug", "SIF.Smartobject.analyze", message);
 	}
 	
-	$.each (SIF.ConnectorManager.connectors, function () {
+	jQuery.each (SIF.ConnectorManager.connectors, function () {
 		if (filter) {
-			if ($.inArray(this.id, filter) != -1) {
+			if (jQuery.inArray(this.id, filter) != -1) {
 				this.analyze(that.object, success, error);
 			}
 		} else {

@@ -15,30 +15,11 @@
 	<!-- jQuery -->
 	<script type="text/javascript" src="../../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
 	
-	<!-- aloha editor -->
-    <script>GENTICS_Aloha_base="../../lib/aloha/";</script> 
-    <script type="text/javascript" src="../../lib/aloha/aloha.js"></script>
-    <script type="text/javascript" src="../../lib/aloha/plugins/com.gentics.aloha.plugins.Format/plugin.js"></script>
-    <script type="text/javascript" src="../../lib/aloha/plugins/com.gentics.aloha.plugins.Table/plugin.js"></script>
-    <script type="text/javascript" src="../../lib/aloha/plugins/com.gentics.aloha.plugins.List/plugin.js"></script>
-    <script type="text/javascript" src="../../lib/aloha/plugins/com.gentics.aloha.plugins.Link/plugin.js"></script>
-    <script type="text/javascript" src="../../lib/jquery/jquery.cookie.js"></script>
-	
 	<!-- rdfQuery -->
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.all.min.js"></script>
+	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.core.js"></script>
+	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rdfa.js"></script>
+	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rules.js"></script>
 	
-    <!-- AutoSuggest -->
-	<script type="text/javascript" src="../../lib/autosuggest/jquery.autoSuggest.js"></script>
-    <link rel="stylesheet" href="../../lib/autosuggest/autoSuggest.css" />
-
-    <!-- Autocomplete -->
-    <script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.core.js"></script>
-    <script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.position.js"></script>
-    <script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.widget.js"></script>
-    <script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.menu.js"></script>
-    <script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.autocomplete.js"></script>
-    <link rel="stylesheet" href="../../lib/jquery-ui/css/jquery.ui.all.css" />
-
     <!-- SIF - Semantic Interaction Framework -->
    <script type="text/javascript" src="../../src/core/core.js"></script>
     <script type="text/javascript" src="../../src/core/logs.js"></script>
@@ -65,157 +46,31 @@
     <script type="text/javascript" src="../../src/dsf/persons.js"></script>
     <script type="text/javascript" src="../../src/dsf/employees.js"></script>
     <script type="text/javascript" src="../../src/dsf/places.js"></script>
+    <script type="text/javascript" src="../../src/dsf/entities.js"></script>
    
+   <!-- Aloha - Configurations
    <script type="text/javascript">
 	GENTICS.Aloha.settings = {
 		errorhandling : false
 	};
-   </script>
+   </script> -->
+   
    <!-- SIF - Configurations -->
    <script type="text/javascript">
 	SIF.options.logLevels = ['error', 'warn', 'debug', 'info'];
-	SIF.Connectors.stanbol.options.stanbol_url = "http://stanbol.iksfordrupal.net:9000/engines/";
+	SIF.options.proxy_url = "../../utils/proxy/proxy.php";
+	SIF.Connectors.stanbol.options.stanbol_enhancer_url = "http://stanbol.iksfordrupal.net:9000/engines/";
+	SIF.Connectors.stanbol.options.stanbol_entityhub_url = "http://stanbol.iksfordrupal.net:9000/entityhub/";
    </script>
   
-  <!-- SiFObserver -->
-   <script type="text/javascript">
-		
-		var SiFObserver = function ( selector, overwrite_delimiters ) {
-			
-			this.delimiters = [];
-			this.autoCompleteElements = [];
-			
-			var that = this;
-			var delims = overwrite_delimiters || [ ':', ';', '.', '@', '*', '#', 'Enter', "\t" ];
-			
-			// Store delimiter tokens with their charCode values for quicker testing later on
-			$.each(
-				delims,
-				function ( i, e ) {
-					that.delimiters.push(
-						( e == 'Enter' ) ? 13 : e.charCodeAt( 0 )
-					);
-				}
-			);
-			
-			var elem = $( selector ).keypress(function ( event ) {
-				
-				if ( jQuery.inArray( event.keyCode || event.charCode, that.delimiters ) >= 0 ) {
-					var range = GENTICS.Aloha.Selection.rangeObject,
-						elem = $( range.commonAncestorContainer ),
-						tag_name = elem.attr( 'tagName' ),
-						far_parent = $( range.limitObject ),
-						near_parent = range.markupEffectiveAtStart[
-							range.markupEffectiveAtStart.length - 1
-						];
-					
-					console.log(
-						"SiFObserver:" +
-						"\n\t elem:", elem,
-						"\n\t ear parent:", near_parent,
-						"\n\t far parent:", far_parent
-					);
-					
-					switch ( tag_name ) {
-						case 'UL':
-						case 'OL':
-							console.log( 'SiFObserver: Creating smart object from ', far_parent );
-							that.createSmartObject( far_parent );
-							that.context_element = far_parent;
-							break;
-						case 'LI':
-							if ( elem.parent().find( 'li' ).length > 0 ) {
-								// Attach autocomplete on newly created li element
-								console.log( 'SiFObserver: Attaching autocomplete on ', elem );
-								that.attachAutocomplete( elem );
-							} else {
-								// do something smart with this object
-							}
-							break;
-						default:
-							console.info( 'SiFObserver: Do nothing' );
-							break;
-					}
-				}
-				
-			});
-			
-			console.info( 'SiFObserver: observing ', elem );
-			
-		};
-		
-		SiFObserver.prototype.attachAutocomplete = function ( elem ) {
-			
-			var that = this;
-			// Only attach autocomplete to this element if there isn't one on it already
-			if ( elem.attr( 'data-has_sif_autocomplete' ) != 'true' ) {
-				elem.autocomplete({
-					source: function ( request, response ) {
-						var persons = that.context_element.sif( 'companies' ).sif( 'employees' ),
-							names = [];
-						// loop through connectors
-						$.each( persons.matches, function() {
-							// loop through people
-							$.each( this, function() {
-								names.push( this.name.toString().replace( /^"([^"]+)".+/, "$1" ) );
-							});
-						});
-						response( $.ui.autocomplete.filter( names, request.term ) );
-					}
-				});
-				elem.attr( 'data-has_sif_autocomplete', 'true' );
-			}
-			
-		};
-		
-		SiFObserver.prototype.createSmartObject = function ( elem ) {
-			console.log( 'SiFObserver: Doing semantic lifting on ', elem );
-			elem.sif();
-		};
-		
-   </script>
+  
    
   <!-- Let's use it! -->
    <script type="text/javascript">
       $(function() {
-		
-		var sif_ob = new SiFObserver( '#summary' );
-		
 		SIF.User.sif('analyze');
-		/* Commenting this out for now becuase it is causing issues with recursion too many recursions...
-		$('#summary').keydown(function( event ) {
-			if ( event.simulated ) {
-				event.stopImmediatePropagation();
-			}
-			var elem = GENTICS.Aloha.Selection.rangeObject.commonAncestorContainer;
-			event = $.Event( event );
-			if ( event.originalEvent ) {
-				for ( var i = $.event.props.length, prop; i; ) {
-					prop = $.event.props[ --i ];
-					event[ prop ] = event.originalEvent[ prop ];
-				}
-			}
-			event.simulated = true;
-			$( elem ).trigger( event );
-		});
-		*/
-		$('#summary').aloha();
-		$('#summary').find('li').autocomplete({
-			source: function(request, response) {
-				var persons = $('#summary').sif('companies').sif('employees'),
-					names = [];
-				// loop through connectors
-				$.each( persons.matches, function() {
-					// loop through people
-					$.each( this, function() {
-						names.push( this.name.toString().replace( /^"([^"]+)".+/, "$1" ) );
-					});
-				});
-				response( $.ui.autocomplete.filter( names, request.term ) );
-			}
-		});
-		 //semantify the abstract object
-		 $('#summary').sif('analyze'); //triggers abs.'contextChanged'
+		
+		 jQuery('#summary').sif('analyze');
       });
     </script>
 	
@@ -232,18 +87,18 @@
 	<div class="introduction">
 	  This is a page to demonstrate the usage of the Semantic Interaction Framework.
 	</div>
+	<button onclick="jQuery('summary').sif('places');">Test</button>
       </center>
       <div>
-		<div id="summary">
-		  <h3>Teaser</h3>
-		  <p>The IKS Semantic interaction framework hackathon took place in Vienna, Austria. 
-		  Persons from different locations and companies came to work on the framework, e.g.,
-		  GENTICS, DFKI, jQuery UI.</p>
-		  <h3>Participants</h3>
-	      <ul>
-	        <li></li>
-	      </ul>
-		  	<div style="display:none;">
+		<div id="text">
+		  <h3 id="teaser">Teaser</h3>
+		  <p id="summary">Belgium</p>
+		  <h3 id="participants">Participants</h3>
+		  <ul id="list_of_participants">
+		  	
+		  </ul>
+		</div>
+		<div id="rdfatest" style="display:none;">
 			<span typeof="v:Organization" about="#dfki">
 				<span property="v:name">DFKI GmbH</span>
 				<span property="v:url">http://www.dfki.de</span>
@@ -313,62 +168,6 @@
 				<span property="v:role" content="???"></span>
 			</span>
 		</div>
-		</div>
-		<hr/>
-		<hr/>
-		<table>
-			<tr>
-				<td style="width:300px;vertical-align:top;"><div id="companies">
-				  <h3>Tags - Companies</h3>
-				  <button onclick="presentEntitiesAsTags($('#summary').sif('companies'), $('#companies'));$(this).attr('disabled', 'disabled');">Retrieve all companies</button>
-				</div></td>
-				<td style="width:300px;vertical-align:top;"><div id="persons">
-				  <h3>Tags - Persons</h3>
-				  <button onclick="presentEntitiesAsTags($('#summary').sif('persons'), $('#persons'));$(this).attr('disabled', 'disabled');">Retrieve all persons</button>
-				  <div class="info"></div>
-				</div></td>
-			</tr>
-		</table>
-      </div>
-      <div>
-      	<h4 style="display:inline">Code explanation:</h4><input onclick="$(this).attr('checked')? $('#code').show():$('#code').hide();" style="display:inline;margin-left:15px;" type="checkbox"><i style="font-size:80%;">toggle</i></input>
-		<span id="code" style="display:none;">
-		<p>Load the Semantic Interaction Framework:
-			<pre>&lt;script type="text/javascript" src=".../jquery.sif-0.1.min.js"&gt;&lt;/script&gt;</pre>
-		</p>
-		<p>Customize the Semantic Interaction Framework:
-			<pre>
-&lt;!-- SIF - connectors --&gt;
-&lt;script type="text/javascript" src=".../connectors/stanbol.js"&gt;&lt;/script&gt;
-&lt;script type="text/javascript" src=".../connectors/browser.js"&gt;&lt;/script&gt;
-&lt;script type="text/javascript" src=".../connectors/rdfa.js"&gt;&lt;/script&gt;
-
-&lt;!-- SIF - Domain specific Functionality --&gt;
-&lt;script type="text/javascript" src=".../src/dsf/analyze.js"&gt;&lt;/script&gt;
-&lt;script type="text/javascript" src=".../src/dsf/places.js"&gt;&lt;/script&gt;
-&lt;script type="text/javascript" src=".../src/dsf/persons.js"&gt;&lt;/script&gt;
-
-&lt;!-- SIF - Configurations --&gt;
-&lt;script type="text/javascript"&gt;
-    SIF.Connectors.stanbol.options.stanbol_url = 
-	             "http://stanbol.iksfordrupal.net:9000/engines/";
-&lt;/script&gt;
-		   </pre>
-		</p>
-		<p>Semantify the object:
-			<pre>
-$(function() {
-  //semantify the abstract object
-  $('#summary').sif('analyze'); //triggers 'contextChanged' on $('#summary')
-});</pre>
-		</p>
-		<p>Query for found persons:
-			<pre>$('#summary').sif('persons');</pre>
-		</p>
-		<p>Query for found places:
-			<pre>$('#summary').sif('places');</pre>
-		</p>
-		</span>
       </div>
     </div>
   </body>

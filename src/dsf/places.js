@@ -46,7 +46,10 @@ SIF.Dsfs.places.init = function () {
  * @example
  * var place = 
  * {
- *   name : "Vienna"
+ *   name : "Vienna",
+ *   latitude: 0.000,
+ *   longitude: 0.000,
+ *   
  * }
  * @return {Object}
  */
@@ -58,7 +61,7 @@ SIF.Smartobject.prototype.places = function () {
 		if (mapper) {
 			var rdf = copy.getContext().rdf[connectorId];
 			if (rdf) {
-				copy.matches = copy.matches.concat(mapper(rdf, this.matches));
+				copy.matches = SIF.Utils.concatDistinct(copy.matches, mapper(rdf, this.matches));
 			}
 		}
 	}
@@ -67,36 +70,42 @@ SIF.Smartobject.prototype.places = function () {
 
 SIF.Dsfs.places.connectorMappers['sif.connector.Rdfa'] = function (rdf) {
 	 var ret = [];
-	rdf
+	 rdf
 	.where('?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.data-vocabulary.org/#Address>')
 	.where('?subject <http://rdf.data-vocabulary.org/#locality> ?name')
 	.each (function () {
 		var place =  {
 				uri : this.subject,
-				name : this.name.toString()
+				name : this.name.toString().replace(/"/g, '')
+		};
+		ret.push(place);
+	});
+
+	return ret;
+}
+
+/**
+ * Returns an array of companies.
+ */
+SIF.Dsfs.places.connectorMappers['sif.connector.Stanbol'] = function (rdf, matches) {
+    var ret = [];
+    
+    rdf
+    .where('?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Place>')
+    .where('?subject <http://www.w3.org/2000/01/rdf-schema#label> ?name')
+	.optional('?subject <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long')
+	.optional('?subject <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat')
+	.optional('?subject <http://dbpedia.org/ontology/postalCode> ?pc')
+	.each (function () {
+		var place = {
+				uri : this.subject,
+				name : this.name.toString().replace(/"/g, ''),
+				latitude : (this.lat)? parseFloat(this.lat.toString().replace(/"/g, '')) : undefined,
+				longitude : (this.long)? parseFloat(this.long.toString().replace(/"/g, '')) : undefined,
+				postalCode : (this.pc)? this.pc.toString().replace(/"/g, '') : undefined,
 		};
 		ret.push(place);
 	});
     
-	return ret;
-}
-
-SIF.Dsfs.places.connectorMappers['sif.connector.Stanbol'] = function (rdf) {
-	 var ret = [];
-	
-	 rdf
-	.where('?subject <http://fise.iks-project.eu/ontology/entity-reference> ?object')
-	.where('?subject <http://fise.iks-project.eu/ontology/entity-type> <http://dbpedia.org/ontology/Place>')
-	.where('?subject <http://fise.iks-project.eu/ontology/entity-label> ?name')
-	.where('?subject <http://fise.iks-project.eu/ontology/confidence> ?confidence')
-	.each (function () {
-		var place =  {
-				uri : this.object,
-				name : this.name.toString(),
-				confidence : this.confidence.toString()
-		};
-		ret.push(place);
-	});
-		
-	return ret;
+	return ret;	
 }

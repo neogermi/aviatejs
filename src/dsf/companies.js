@@ -63,7 +63,7 @@ SIF.Smartobject.prototype.companies = function () {
 		if (mapper) {
 			var rdf = copy.getContext().rdf[connectorId];
 			if (rdf) {
-				copy.matches = copy.matches.concat(mapper(rdf, this.matches));
+				copy.matches = SIF.Utils.concatDistinct(copy.matches, mapper(rdf, this.matches));
 			}
 		}
 	}
@@ -91,6 +91,33 @@ SIF.Dsfs.companies.connectorMappers['sif.connector.Rdfa'] = function (rdf, match
 				longitude : (this.longitude)? this.longitude.toString() : undefined
 		};
 		ret.push(company);
+	});
+    
+	return ret;	
+}
+
+/**
+ * Returns an array of companies.
+ */
+SIF.Dsfs.companies.connectorMappers['sif.connector.Stanbol'] = function (rdf, matches) {
+    var ret = [];
+
+    rdf
+	.where('?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.opengis.net/gml/_Feature>')
+	.where('?subject ?p ?o')
+	.where('?subject <http://www.w3.org/2000/01/rdf-schema#label> ?name')
+	.where('?subject <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?long')
+	.where('?subject <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat')
+	.where('?subject <http://www.w3.org/2000/01/rdf-schema#comment> ?comment')
+	.each (function () {
+		var company = {
+				uri : this.subject,
+				name : this.name.toString().replace(/"/g, ''),
+				url : (this.url)? this.url.toString().replace(/"/g, '') : undefined,
+				latitude : (this.lat)? parseFloat(this.lat.toString().replace(/"/g, '')) : undefined,
+				longitude : (this.long)? parseFloat(this.long.toString().replace(/"/g, '')) : undefined,
+			    comment : (this.comment)? this.comment.toString().replace(/"/g, '') : undefined
+		};
 	});
     
 	return ret;	

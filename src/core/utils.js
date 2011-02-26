@@ -53,4 +53,21 @@ SIF.Utils.prototype.distance = function (pos1, pos2) {
 	return d;
 }
 
+
+SIF.Utils.prototype.concatDistinct = function (arr1, arr2) {
+	jQuery.each(arr2, function (i2) {
+		var contains = false;
+		jQuery.each (arr1, function (i1) {
+			if (this.uri === arr2[i2].uri) {
+				contains = true;
+			}
+		});
+		if (!contains) {
+			arr1.push(arr2[i2]);
+		}
+	});
+
+	return arr1;
+}
+
 SIF.Utils = new SIF.Utils();
