@@ -1,3 +1,0 @@
-[submodule "deps/rdfquery"]
-	path = deps/rdfquery
-	url = git@github.com:alohaeditor/rdfQuery.git
