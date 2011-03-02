@@ -16,79 +16,140 @@
  *  limitations under the License.
  */
 
-if ( !SIF.Connectors ) SIF.Connectors = {};
+var stanbolConnector = new Connector('stanbol', {
+	"proxy_url" : "../../utils/proxy/proxy.php",
+	"enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
+	"entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
+});
 
-/**
- * register the connector with a unique name
- */
-SIF.Connectors.stanbol = new SIF.Connector('sif.connector.Stanbol');
-
-SIF.Connectors.stanbol.options = {
-		"stanbol_enhancer_url" : "http://stanbol.demo.nuxeo.com/engines/",
-		"stanbol_entityhub_url" : "http://stanbol.demo.nuxeo.com/entityhub/",
-		"dataType" : "application/rdf+json"
+stanbolConnector.analyze = function (object, callback) {
+	if (object == undefined) {
+		jQuery.Aviate.log ("warn", "Aviate.Connector('" + this.id + "')", "Given object is undefined!");
+		return;
+	} else if (typeof object === 'object') {
+		//stanbol can not deal with embedded HTML, so we remove that. --> BAD!
+		var text = "";
+		if (object.get(0).tagName && object.get(0).tagName == 'TEXTAREA') {
+			text = object.get(0).val();
+		} else {
+			text = object
+	        .clone()    //clone the element
+	        .children() //select all the children
+	        .remove()   //remove all the children
+	        .end()  //again go back to selected element
+	        .text()    //get the text of element
+	        .replace(/\s+/g, ' ') //collapse multiple whitespaces
+	        .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
+		}
+		var rdf = stanbolConnector.enhance(text);
+		
+		if (object.find('*').length) {
+			object.find('*').each(function () {
+				var obj = jQuery(this);
+				var textc = "";
+				if (obj.get(0).tagName && obj.get(0).tagName == 'TEXTAREA') {
+					textc = obj.get(0).val();
+				}
+				else {
+				textc = obj
+		        .clone()    //clone the element
+		        .children() //select all the children
+		        .remove()   //remove all the children
+		        .end()  //again go back to selected element
+		        .text()    //get the text of element
+		        .replace(/\s+/g, ' ') //collapse multiple whitespaces
+		        .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
+				}
+				var rdfc = stanbolConnector.enhance(textc);
+				//merging the results into the main object
+				rdfc.databank.triples().each(function () {
+					rdf.add(this);
+				});
+			});
+		}
+		
+		callback(rdf);
+		
+	} else {
+		jQuery.Aviate.log("error", "Aviate.Connector(" + this.id + ")", "Expected object, found: '" + (typeof object) + "'");
+	}
 };
 
-SIF.Connectors.stanbol.init = function () {
-	//TODO: what needs to be initialized for stanbol?
-}
-
-SIF.Connectors.stanbol.analyze = function (obj, success, error) {
-	if (obj == undefined) {
-		SIF.log ("warn", "SIF.Connectors.stanbol#analyze", "Undefined object!");
-		return;
+stanbolConnector.enhance = function (text) {
+	if (text.length === 0) {
+		//empty text
+		return jQuery.rdf();
 	}
 	
-	var text = extractText(obj);
-	if (text.length == 0) {
-		SIF.log ("warn", "SIF.Connectors.stanbol#analyze", "Could not extract text from object!");
-		return
-	}
-	
-	var enhancerOutput = queryEnhancer(text);
-	if (enhancerOutput.status == 200) {
+	var enhancerOutput = stanbolConnector.queryEnhancer(text);
+	if (enhancerOutput.status === 200) {
 		var responseObj = jQuery.parseJSON(enhancerOutput.responseText);
-		var rdf = parseEnhancerOutput(responseObj);
-		var rdf2 = fillWithEntityHubInfo(rdf);
-		success(rdf, this);
-	} else {
-		error("Could not extract information from enhancer!");
+		var rdf = stanbolConnector.parseEnhancerOutput(responseObj);
+		var rdf2 = stanbolConnector.fillWithEntityHubInfo(rdf);
+		return rdf2;
 	}
 }
 
-queryEnhancer = function (text) {
-	if (SIF.options.proxy_url) {
+stanbolConnector.queryEnhancer = function (text) {
+
+	var proxy = this.options.proxy_url;
+	var enhancer_url = this.options.enhancer_url;
+
+	if (proxy) {
 		return jQuery.ajax({
 			async: false,
 			type: "POST",
-			url: SIF.options.proxy_url,
+			url: proxy,
 			data: {
-    			proxy_url: SIF.Connectors.stanbol.options.stanbol_enhancer_url, 
+    			proxy_url: enhancer_url, 
     			content: text,
     			verb: "POST",
-    			format: SIF.Connectors.stanbol.options.dataType
+    			format: "application/rdf+json"
 			}
 		});
 	} else {
 		return jQuery.ajax({
 			async: false,
 			type: "POST",
-			url: SIF.Connectors.stanbol.options.stanbol_enhancer_url, 
+			url: enhancer_url,
 			data: text,
-			dataType: SIF.Connectors.stanbol.options.dataType
+			dataType: "application/rdf+json"
 		});
 	}
-}
+};
 
-queryEntityHub = function (uri) {
-	if (SIF.options.proxy_url) {
+stanbolConnector.parseEnhancerOutput = function (data) {
+	return jQuery.rdf().load(data, {});
+};
+
+stanbolConnector.fillWithEntityHubInfo = function (rdf) {
+	jQuery.each(rdf.databank.objectIndex, function (uri) {
+		var uriStr = uri.toString().replace(/"/g, '').replace(/</, '').replace(/>/, '');
+		if (uriStr.match('^urn:.*')) {
+			//ignore these uris!
+			return jQuery.rdf();
+		}
+		var result = stanbolConnector.queryEntityHub(uriStr);
+		if (result.status == 200) {
+			var resultText = result.responseText;
+			var resultObj = jQuery.parseJSON(resultText);
+			rdf.load(resultObj);
+		};
+	});
+	return rdf;
+};
+
+stanbolConnector.queryEntityHub = function (uri) {
+	var proxy = this.options.proxy_url;
+	var entityhub_url = this.options.entityhub_url.replace(/\/$/, '');
+	if (proxy) {
 		return jQuery.ajax({
 			async: false,
 			type: "POST",
-			url: SIF.options.proxy_url,
+			url: proxy,
 			data: {
-    			proxy_url: SIF.Connectors.stanbol.options.stanbol_entityhub_url + "sites/entity?id=" + uri, 
-    			content: "",
+    			proxy_url: entityhub_url + "/sites/entity?id=" + uri, 
+    			content: '',
     			verb: "GET",
     			format: "application/rdf+json"
 			}
@@ -97,36 +158,9 @@ queryEntityHub = function (uri) {
 		return jQuery.ajax({
 			async: false,
 			type: "GET",
-			url: SIF.Connectors.stanbol.options.stanbol_entityhub_url + "sites/entity?id=" + uri,
+			url: entityhub_url + "/sites/entity?id=" + uri,
 			data: text,
-			dataType: SIF.Connectors.stanbol.options.dataType
+			dataType: "application/rdf+json"
 		});
 	}
-}
-
-extractText = function (obj) {
-	if (obj.get(0).tagName && obj.get(0).tagName == 'TEXTAREA') {
-		return obj.val();
-	} else if (obj.html) {
-		return obj.html();
-	} else {
-		return "";
-	}
-}
-
-parseEnhancerOutput = function (data) {
-	return jQuery.rdf().load(data, {});
-}
-
-fillWithEntityHubInfo = function (rdf) {
-	jQuery.each(rdf.databank.objectIndex, function (uri) {
-		var uriStr = uri.toString().replace(/"/g, '').replace(/</, '').replace(/>/, '');
-		var result = queryEntityHub(uriStr);
-		if (result.status == 200) {
-			var resultText = result.responseText;
-			var resultObj = jQuery.parseJSON(resultText);
-			rdf.load(resultObj);
-		};
-	});
-	return rdf;
-}
+};

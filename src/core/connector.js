@@ -26,68 +26,14 @@
  * @version 1.0
  */
 
-if (!SIF.Connectors) SIF.Connectors = {};
+Connector = function(id, options) {
 
-/**
- * A {@link SIF.Connector} is the connection between a (semantic) back-end and the semantic
- * interaction framework.
- * 
- * @namespace SIF.Connector
- * @class SIF.Connector The parent class to inherit connector functionality from.
- * @see SIF.ConnectorManager#register
- * @param {String} connectorId A unique id (or name) for the connector.
- * @constructor
- */
-SIF.Connector = function(connectorId) {
+	this.id = id;
+	this.options = options;
 	
-	this.id = connectorId;
-	//TODO: throw an exception if the id is already registered.
-
-	SIF.ConnectorManager.register(this);
+	$.Aviate.registerConnector(this);
 };
 
-/**
- * {@link SIF.Connector} specific options
- * @property
- * @type Object
- */
-SIF.Connector.prototype.options = {};
+Connector.prototype.init = function() {};
 
-/**
- * Initialize {@link SIF.Connector}.<br />
- * To be overwritten!
- * @return void.
- */
-SIF.Connector.prototype.init = function() {};
-
-/**
- * Analyzes the given object and passes a
- * {@link jQuery.rdf} object to the success callback.
- * Passes a {@link String} to the error callback if
- * something went wrong.<br />
- * This is an asynchronous function.
- * @param {Object} obj The object to be analyzed.
- * @param {Function} success The success callback. Retrieves {@link jQuery.rdf}.
- * @param {Function} error The error callback. Retrieves {@link String}.
- * @return void
- */
-SIF.Connector.prototype.analyze = function (obj, success, error) {};
-
-/**
- * Queries the backend for all triples regarding the given entity. 
- * @param {Object} obj The object to be queried for.
- * @param {Function} success The success callback. Retrieves {@link jQuery.rdf}.
- * @param {Function} error The error callback. Retrieves {@link String}.
- * @return void
- */
-SIF.Connector.prototype.query = function (obj, success, error) {};
-
-/**
- * Serializes the annotation of the knowledge in the object.
- * @param {Object} obj The object to be queried for.
- * @param {jQuery.rdf} rdf The RDF data to be serialized.
- * @param {Function} success The success callback. Retrieves the {@link jQuery} object.
- * @param {Function} error The error callback. Retrieves {@link String}.
- * @return void
- */
-SIF.Connector.prototype.serialize = function (obj, rdf, success, error) {};
+Connector.prototype.analyze = function (object, callback) {};

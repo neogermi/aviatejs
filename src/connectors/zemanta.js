@@ -16,21 +16,12 @@
  *  limitations under the License.
  */
 
-if ( !SIF.Connectors ) SIF.Connectors = {};
+var zemantaConnector = new Connector('zemanta', {
+	"proxy_url" : "../../utils/proxy/proxy.php",
+	"zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
+	"api_key" : ""
+});
 
-/**
- * register the connector with a unique name
- */
-SIF.Connectors.zemanta = new SIF.Connector('sif.connector.Zemanta');
-
-SIF.Connectors.zemanta.options = {
-		//TODO
+zemantaConnector.analyze = function (object, callback) {
+	jQuery.Aviate.log("warn", "Aviate.Connector(" + this.id + ")", "TO BE IMPLEMENTED: analyze()!");
 };
-
-SIF.Connectors.zemanta.init = function () {
-	//TODO: what needs to be initialized for stanbol?
-}
-
-SIF.Connectors.zemanta.analyze = function (text, success, error) {	
-	error("SIF.Connectors.zemanta needs to be implemented!");
-}

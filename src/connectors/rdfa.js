@@ -16,28 +16,35 @@
  *  limitations under the License.
  */
 
-if ( !SIF.Connectors ) SIF.Connectors = {};
+var rdfaConnector = new Connector('rdfa');
 
-/**
- * register the connector with a unique name
- */
-SIF.Connectors.rdfa = new SIF.Connector('sif.connector.Rdfa');
+rdfaConnector.analyze = function (object, callback) {
+	if (object == undefined) {
+		jQuery.Aviate.log ("warn", "Aviate.Connector('" + this.id + "')", "Given object is undefined!");
+		return;
+	} else if (typeof object === 'object') {
+		//does only work on objects that have the 'typeof' attribute set!
+		if (object.attr('typeof')) {
+			//use rdfQuery to analyze the object
+			var rdf = jQuery( object ).rdfa();
+			callback(rdf);
+		} else {
+			jQuery.Aviate.log("info", "Aviate.Connector(" + this.id + ")", "Object has no 'typeof' attribute! Trying to find children.");
+			var rdf = jQuery.rdf();
+			object.find('[typeof]').each(function(i, e) {
 
-SIF.Connectors.rdfa.options = {};
-
-SIF.Connectors.rdfa.init = function () {
-	//TODO: what needs to be initialized for rdfa?
-}
-
-SIF.Connectors.rdfa.analyze = function (obj, success, error) {
-	if (jQuery.type(obj) === 'object') {
-		for (var i = 0; i < obj.length; i++) {
-			var rdfa = jQuery(obj[i]).rdfa();
-			success(rdfa, this);
+				var rdfa = jQuery(e).rdfa();
+				$.each(rdfa.databank.triples(), function () {
+					rdf.add(this);
+				});
+				//merging the results into the main object
+				rdfa.databank.triples().each(function () {
+					rdf.add(this);
+				});
+			});
+			callback(rdf);
 		}
+	} else {
+		jQuery.Aviate.log("error", "Aviate.Connector(" + this.id + ")", "Expected object, found: '" + (typeof object) + "'");
 	}
-	else {
-		error("Can only handle jQuery objects!");
-	}
-}
-
+};

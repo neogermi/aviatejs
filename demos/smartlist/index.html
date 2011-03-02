@@ -15,62 +15,45 @@
 	<!-- jQuery -->
 	<script type="text/javascript" src="../../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
 	
-	<!-- rdfQuery -->
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.core.js"></script>
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rdfa.js"></script>
-	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.rules.js"></script>
+    <!-- jQuery UI -->
+	<script type="text/javascript" src="../../lib/jquery-ui/js/jquery.ui.widget.js"></script>
 	
-    <!-- SIF - Semantic Interaction Framework -->
-   <script type="text/javascript" src="../../src/core/core.js"></script>
-    <script type="text/javascript" src="../../src/core/logs.js"></script>
-    <script type="text/javascript" src="../../src/core/events.js"></script>
-    <script type="text/javascript" src="../../src/core/jquery.sif.js"></script>
-    <script type="text/javascript" src="../../src/core/utils.js"></script>
-    <script type="text/javascript" src="../../src/core/smartobject.js"></script>
-    <script type="text/javascript" src="../../src/core/connector.js"></script>
-    <script type="text/javascript" src="../../src/core/connectormanager.js"></script>
-    <script type="text/javascript" src="../../src/core/context.js"></script>
-    <script type="text/javascript" src="../../src/core/contextmanager.js"></script>
-    <script type="text/javascript" src="../../src/core/dsf.js"></script>
-    <script type="text/javascript" src="../../src/core/dsfmanager.js"></script>
-   <!--<script type="text/javascript" src="../../dist/min/jquery.sif-0.1.min.js"></script> -->
+    <!-- rdfQuery -->
+	<script type="text/javascript" src="../../lib/rdfquery/latest/jquery.rdfquery.all.min.js"></script>
 	
-	<!-- SIF - connectors -->
-    <script type="text/javascript" src="../../src/connectors/stanbol.js"></script>
-    <script type="text/javascript" src="../../src/connectors/browser.js"></script>
-    <script type="text/javascript" src="../../src/connectors/rdfa.js"></script>
-	
-	<!-- SIF - Domain specific Functionality -->
-    <script type="text/javascript" src="../../src/dsf/analyze.js"></script>
-    <script type="text/javascript" src="../../src/dsf/companies.js"></script>
-    <script type="text/javascript" src="../../src/dsf/persons.js"></script>
-    <script type="text/javascript" src="../../src/dsf/employees.js"></script>
-    <script type="text/javascript" src="../../src/dsf/places.js"></script>
-    <script type="text/javascript" src="../../src/dsf/entities.js"></script>
-   
-   <!-- Aloha - Configurations
-   <script type="text/javascript">
-	GENTICS.Aloha.settings = {
-		errorhandling : false
-	};
-   </script> -->
-   
-   <!-- SIF - Configurations -->
-   <script type="text/javascript">
-	SIF.options.logLevels = ['error', 'warn', 'debug', 'info'];
-	SIF.options.proxy_url = "../../utils/proxy/proxy.php";
-	SIF.Connectors.stanbol.options.stanbol_enhancer_url = "http://stanbol.iksfordrupal.net:9000/engines/";
-	SIF.Connectors.stanbol.options.stanbol_entityhub_url = "http://stanbol.iksfordrupal.net:9000/entityhub/";
-   </script>
-  
-  
-   
+	<!-- Aviate - Semantic Interaction Framework -->
+	<script type="text/javascript" src="../../src/core/core.js"></script>
+	<script type="text/javascript" src="../../src/core/connector.js"></script>
+	<script type="text/javascript" src="../../src/core/dsm.js"></script>
+	<!-- Aviate - Connectors -->
+	<script type="text/javascript" src="../../src/connectors/rdfa.js"></script>
+	<script type="text/javascript" src="../../src/connectors/stanbol.js"></script>
+	<script type="text/javascript" src="../../src/connectors/zemanta.js"></script>
+	<!-- Aviate - Domain-specific mappings -->
+	<script type="text/javascript" src="../../src/dsm/entities.js"></script>
+	<script type="text/javascript" src="../../src/dsm/persons.js"></script>
+	<script type="text/javascript" src="../../src/dsm/places.js"></script>
+	<script type="text/javascript" src="../../src/dsm/companies.js"></script>
+	<script type="text/javascript" src="../../src/dsm/employees.js"></script>
+	<script type="text/javascript" src="../../src/dsm/positions.js"></script>
+
   <!-- Let's use it! -->
    <script type="text/javascript">
       $(function() {
-		SIF.User.sif('analyze');
-		
-		 jQuery('#summary').sif('analyze');
+		var x = jQuery('#text')
+		.aviate()
+		.aviate('analyze', false);
+		var persons = x.aviate('clear')
+		.aviate('query', 'persons').aviate('matches');
+		var companies = x.aviate('clear')
+		.aviate('query', 'companies').aviate('matches');
+		var employees = x.aviate('clear')
+		.aviate('query', 'companies')
+		.aviate('query', 'employees').aviate('matches');
+		var places = x.aviate('clear')
+		.aviate('query', 'places').aviate('matches');
+		debugger;
+		console.info("DONE!");		 
       });
     </script>
 	
@@ -87,17 +70,31 @@
 	<div class="introduction">
 	  This is a page to demonstrate the usage of the Semantic Interaction Framework.
 	</div>
-	<button onclick="jQuery('summary').sif('places');">Test</button>
-      </center>
+	  </center>
       <div>
 		<div id="text">
 		  <h3 id="teaser">Teaser</h3>
-		  <p id="summary">Belgium</p>
+		  <span id="realtest">This is a short paragraph about the person Bob Marley.</span>
+		  <p class="smart" id="test3" typeof="v:Place" about="#belgium">Lorem ipsum <span typeof="v:Geo">This is a test</span> bla</p>
+		  <p class="smart" id="test2"> Lorem ipsum 
+          <span typeof="v:Event" about="#iks-istanbul-meeting">
+          	<span rel="v:geo"><span typeof="v:Geo"><span property="v:latitude" content="41.0138429552247"></span><span property="v:longitude" content="28.9496612548828"></span></span></span>
+					<span property="v:startDate" content="20101019T08:00" type="date"></span>
+					<span property="v:endDate" content="20101021T17:00" type="date"></span>
+					<span property="v:url" content="http://www.interactive-knowledge.org/content/iks-general-assembly-meeting-istanbul-october-2010"></span>
+					<span property="v:summary">IKS General Assembly Meeting</span>
+					<span rel="v:address">
+						<span typeof="v:Address">in 
+							<span property="v:locality">Istanbul</span>, 
+							<span property="v:region">Turkey</span> are to demonstrate the capabilities of the IKS Alpha stack software.
+						</span>
+					</span>
+				</span>
+		  ipsum lorem.</p>
 		  <h3 id="participants">Participants</h3>
 		  <ul id="list_of_participants">
 		  	
 		  </ul>
-		</div>
 		<div id="rdfatest" style="display:none;">
 			<span typeof="v:Organization" about="#dfki">
 				<span property="v:name">DFKI GmbH</span>
@@ -167,6 +164,7 @@
 				</span>
 				<span property="v:role" content="???"></span>
 			</span>
+		</div>
 		</div>
       </div>
     </div>
