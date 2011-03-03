@@ -1,7 +1,5 @@
 /*
- * Copyright 2011 IKS Project
- * Copyright 2011 GENTICS Software GmbH, Vienna
- * Copyright 2011 evo42 communications Ltd.
+ * Copyright 2011 DFKI GmbH
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+/**
+ * @fileOverview Aviate JS
+ * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
+ * @copyright (c) 2011 DFKI GmbH
+ * @license Apache License, Version 2.0 (LICENSE.txt)
+ */
+
 
 var rdfaConnector = new Connector('rdfa');
 

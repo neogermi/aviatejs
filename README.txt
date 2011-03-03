@@ -22,6 +22,7 @@ Please add this into the header of your webpage:
 <script type="text/javascript" src=".../dsm/companies.js"></script>
 <script type="text/javascript" src=".../dsm/employees.js"></script>
 <script type="text/javascript" src=".../dsm/palces.js"></script>
+
 Now, here is what you get for these 11 lines of code :) Imagine that there is a huge <div> element in the current webpage that has the id 'wrapper'. Now, we can use the given connectors to let the contained text be analysed and and can then retrieve the found entities by the provided domain-specific functionalities.
 
 <script type="text/javascript">
