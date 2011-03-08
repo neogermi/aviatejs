@@ -31,4 +31,10 @@ Connector = function(id, options) {
 
 Connector.prototype.init = function() {};
 
-Connector.prototype.analyze = function (object, callback) {};
+Connector.prototype.analyze = function (object, namespaces, callback) {
+	$.Aviate.log("info", "Aviate.Connector(" + this.id + ")", "Not implemented: analyze();");
+};
+
+Connector.prototype.query = function (uri, keys) {
+	$.Aviate.log("info", "Aviate.Connector(" + this.id + ")", "Not implemented: query();");
+};

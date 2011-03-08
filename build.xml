@@ -15,7 +15,7 @@
     <property name="JS" value="${DIST_DIR}/js/" />
     <property name="JS_MIN" value="${DIST_DIR}/min/" />
 	
-	<target name="doc" description="generates documentation for SIF">
+	<target name="doc" description="generates documentation for AviateJS">
         <!-- jsdoc-toolkit ant taks is currently broken, so we directly run -->
         <echo message="Generating Documentation:"/>
         <java jar="${JSDOC_TOOLKIT_DIR}/jsrun.jar" fork="true" failonerror="true">
@@ -24,7 +24,7 @@
             <arg value="-d=${DOCS_DIR}"/>
             <arg value="${SRC_DIR}/core/core.js"/>
             <arg value="${SRC_DIR}/core/connector.js"/>
-            <arg value="${SRC_DIR}/core/dsm.js"/>
+            <arg value="${SRC_DIR}/core/dsf.js"/>
         </java>
     </target>
 	
@@ -54,7 +54,7 @@
     </target>
     
     <target name="combine" description="combines .js files into one file">
-        <echo message="Building SIF Distribution" />
+        <echo message="Building AviateJS Distribution" />
         <concat destfile="${JS}/aviate-${VERSION}.js">
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
             <fileset dir="${SRC_DIR}" includes="core/dsm.js"/>
@@ -63,7 +63,7 @@
     </target>
 
     <target name="minimise">
-        <echo message="Minimising SIF" />
+        <echo message="Minimising AviateJS" />
 
         <antcall target="minimiseJSFile">
             <param name="inputFile" value="${JS}/aviate-${VERSION}.js" />

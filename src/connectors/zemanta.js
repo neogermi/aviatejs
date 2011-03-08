@@ -26,7 +26,3 @@ var zemantaConnector = new Connector('zemanta', {
 	"zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
 	"api_key" : ""
 });
-
-zemantaConnector.analyze = function (object, callback) {
-	jQuery.Aviate.log("warn", "Aviate.Connector(" + this.id + ")", "TO BE IMPLEMENTED: analyze()!");
-};

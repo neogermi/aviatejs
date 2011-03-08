@@ -34,34 +34,40 @@
 
     	// default options
     	options: {
+    		//TODO: add specific options!
     		/**
-    		 * connectors: holds an array of functions that retrieve
-    		 * a connector and check whether to use it or not. 
+    		 * namespaces to be used!
     		 */
-    		connectors: [function (c) {return true;}],
+    		namespaces: {},
     		//////////// EVENTS /////////////
     		/**
     		 * ready: called as soon as the object is ready (after _create)
     		 */
     		ready: jQuery.noop,
     		/**
-    		 * contextchanged: called every time the context is changed
+    		 * contextchanged: TODO:
     		 */
     		contextchanged: jQuery.noop,
     		/**
-    		 * urischanged: called every time a URI is added or removed
+    		 * urischanged: TODO:
     		 */
     		urischanged: jQuery.noop
     	},
 		/**
-		 * holds an {@link jQuery.rdf} object from every connector.
+		 * TODO:
 		 */
-		_context: {},
+		_cache: {},
+		
 		/**
-		 * matches: holds all matches from the previous query.
-		 * Is an array of plain JS objects.
+		 *  TODO:
 		 */
 		_matches: [],
+		
+		/**
+		 *  TODO:
+		 */
+		_oldMatches: [],
+		
     	/**
     	 * Aviates the element only once!
     	 */
@@ -72,7 +78,7 @@
 		},
 		
 		/**
-		 * Is called every time you call .aviate(...) on an object.
+		 * Is called every time you call .aviate() on an object.
 		 */
 		_init: function() {
 			//ignore
@@ -92,108 +98,106 @@
 			var that = this;
 			var elem = this.element;
 			jQuery.each(jQuery.Aviate.connectors, function () {
-				if (this.analyze) {
-					jQuery.Aviate.log("info", "Aviate.core", "Starting analysis with " + this);
-					var callback = function (conn) {
-						return function (rdf) {
-							that._context[conn.id] = rdf;
-							that._trigger('contextchanged', conn, {'rdf': rdf});
-							jQuery.Aviate.log("info", "Aviate.core", "Received RDF annotation from connector '" + conn.id + "'!");
-						};
-					}(this);
-					if (async) {
-						window.setTimeout(this.analyze(elem, callback), 0); // execute the analysis in an own thread
-					} else {
-						this.analyze(elem, callback);
-					}
+				jQuery.Aviate.log("info", "Aviate.core", "Starting analysis with connector: '" + this.id + "'!");
+				var callback = function (conn) {
+					return function (rdf) {
+						jQuery.each(that.options.namespaces, function(k, v) {
+							rdf.prefix(k, v);
+						});
+						that._cache[conn.id] = rdf;
+						that._trigger('contextchanged', conn, {'rdf': rdf});
+						jQuery.Aviate.log("info", "Aviate.core", "Received RDF annotation from connector '" + conn.id + "'!");
+					};
+				}(this);
+				if (async) {
+					window.setTimeout(this.analyze(elem, that.options.namespaces, callback), 0); // execute the analysis in an own thread
 				} else {
-					jQuery.Aviate.log("info", "Aviate.core", "Connector '" + this.id + "' does not support 'analyze()'!");
+					this.analyze(elem, that.options.namespaces, callback);
 				}
 			});
-			jQuery.Aviate.log("info", "Aviate.core", "Finished analyze!");
+			jQuery.Aviate.log("info", "Aviate.core", "Finished task: 'analyze'!");
 			
 			return this;
 		},
 		
-		query: function (options) {
-			if (options === undefined) {
-				//TODO:
-			} else if (options instanceof jQuery.rdf.resource &&
-					options.type === 'uri') {
-				var ret = [];
-				$.each(this._context, function (connectorId, rdf) {
-					rdf
-					.where(options.value + ' ?p ?o')
-					.each(function () {
-						//TODO: untested code!
-						console.log(this.p + " " + this.o);
-						//TODO: ret.push()
-					});
-				});
-				this._matches = ret;
-			} else if (typeof options === 'string') {
-				var matches = [];
+		filter: function (filterId) {
+			if (filterId === undefined) {
+				jQuery.Aviate.log("warn", "Aviate.core", "Invoked 'filter' with undefined argument!");
+			} else if (typeof filterId === 'string') {
 				var that = this;
-				$.each (jQuery.Aviate.dsms, function () {
-					if (this.id === options) {
-						jQuery.Aviate.log("info", "Aviate.core", "Invoking DSM '" + options + "'!");
-						jQuery.merge(matches, this.query(that._context, that._matches));
+				this._oldMatches = this._matches;
+				this._matches = [];
+				$.each (jQuery.Aviate.dsfs, function () {
+					if (this.id === filterId) {
+						jQuery.Aviate.log("info", "Aviate.core", "Invoking DSF '" + this.id + "'!");
+						jQuery.merge(that._matches, this.filter(that, that._cache, that._oldMatches));
 					}
 				});
-				this._matches = matches;
 			} else {
-				jQuery.Aviate.log("warn", "Aviate.core", "Invoked 'query' with wrong argument: '" + options + "'!");
+				jQuery.Aviate.log("warn", "Aviate.core", "Invoked 'filter' with wrong argument: '" + filterId + "'!");
 			}
 			return this;
-		}, 
+		},
+		
+		query: function (uri, props) {
+			var ret = {};
+			if (uri === undefined) {
+				jQuery.Aviate.log("warn", "Aviate.core", "Invoked 'query' with undefined argument!");
+			}
+			if (uri instanceof jQuery.rdf.resource &&
+					uri.type === 'uri') {
+				var that = this;
+
+				jQuery.each(props, function () {
+					ret[this] = [];
+				});
+
+				jQuery.each(jQuery.Aviate.connectors, function () {
+					var retTmp = this.query(uri, props);
+					if (retTmp) {
+						jQuery.extend(ret, retTmp);
+					}
+
+				});
+			}
+			return ret;
+		},
 		
 		matches: function () {
 			return this._matches;
 		},
 		
-		clear: function () {
-			this._matches = [];
+		undo: function () {
+			this._matches = this._oldMatches;
+			this._oldMatches = [];
 			return this;
 		},
 		
+		clear: function () {
+			this._matches = [];
+			this._oldMatches = [];
+			return this;
+		},
+		
+		////////////////////////////////
+		////////////////////////////////
+		////////////////////////////////
+		
 		add: function (options) {
-			if (options instanceof jQuery.rdf.resource &&
-					options.type === 'uri') {
-				// add to uris array and trigger event
-				this.options.uris.push[options];
-				this._trigger("urischanged", options, {"method" : "add"});
-			} else if (typeof options === 'object') {
-				// add annotation (property -> value) to this
-				// element.
-				// options needs to be in the following format:
-				//options = {prop: <property>, object: <object>};
-				//, where prop must be of type jQuery.uri and
-				// object can either be a 'string', a 'float' or a jQuery.uri
-				//TODO: where should we store the annotations?
-				//TODO: context? -> special key for added annotations?
-			}
+			//TODO
+			return this;
 		}, 
 		
 		remove: function (options) {
-			if (options instanceof jQuery.rdf.resource &&
-					options.type === 'uri') {
-			//TODO: untested code!
-			jQuery.each(uris, function () {
-				if (this === options) {
-					//TODO: array slice
-					this._trigger("urischanged", options, {"method" : "remove"});
-					return;
-				}
-			});
-			} else if (typeof options === 'object') {
-				jQuery.Aviate.log("warn", "Aviate.core", "TO IMPLEMENT: remove({prop, object}");
-			}
+			//TODO
+			return this;
 		},
 		
 		serialize: function () {
 			//TODO: store all annotations to the object
 			//TODO: use VIE for that??
 			jQuery.Aviate.log("warn", "Aviate.core", "TO IMPLEMENT: serialize()");
+			return this;
 		}
     });
 
@@ -213,34 +217,34 @@ jQuery.Aviate.log = function (level, component, message) {
 	}
 }
 
-jQuery.Aviate.dsms = [];
+jQuery.Aviate.dsfs = [];
 
-jQuery.Aviate.registerDsm = function (dsm) {
+jQuery.Aviate.registerDsf = function (dsf) {
 	//first check if there is already 
-	//a domain-specific mapping with 'id' registered
+	//a domain-specific filter with 'id' registered
 	var register = true;
-	jQuery.each(jQuery.Aviate.dsms, function () {
+	jQuery.each(jQuery.Aviate.dsfs, function () {
 		//TODO: untested code!
-		if (this.id === dsm.id) {
+		if (this.id === dsf.id) {
 			register = false;
 			return;
 		}
 	});
 	if (register) {
-		jQuery.Aviate.dsms.push(dsm);
-		jQuery.Aviate.log("info", "Aviate.core", "Registered DSM '" + dsm.id + "'");
+		jQuery.Aviate.dsfs.push(dsf);
+		jQuery.Aviate.log("info", "Aviate.core", "Registered DSF '" + dsf.id + "'");
 	} else {
-		jQuery.Aviate.log("warn", "Aviate.core", "Did not register DSM, as there is" +
-				"already a DSM with the same id registered.");
+		jQuery.Aviate.log("warn", "Aviate.core", "Did not register DSF, as there is" +
+				"already a DSF with the same id registered.");
 	}
 }
 
-jQuery.Aviate.unregisterDsm = function (dsm) {
-	jQuery.each(jQuery.Aviate.dsms, function () {
+jQuery.Aviate.unregisterDsf = function (dsf) {
+	jQuery.each(jQuery.Aviate.dsfs, function () {
 		//TODO: untested code!
-		if (this.id === dsm.id) {
+		if (this.id === dsf.id) {
 			//TODO: array slice
-			jQuery.Aviate.log("info", "Aviate.core", "De-registered DSM '" + dsm + "'");
+			jQuery.Aviate.log("info", "Aviate.core", "De-registered DSF '" + dsf + "'");
 			return;
 		}
 	});
