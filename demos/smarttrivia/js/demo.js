@@ -1,1 +1,0 @@
-var places = [jQuery.rdf.resource(jQuery.uri('http://dbpedia.org/resource/Berlin'))];
